@@ -4,14 +4,17 @@ from logging import getLogger
 import numpy as np
 import pandas as pd
 from loren_frank_data_processing import (get_all_multiunit_indicators,
-                                         get_all_spike_indicators,
-                                         make_neuron_dataframe,
                                          make_tetrode_dataframe)
 from loren_frank_data_processing.core import get_data_structure
 from ripple_detection import get_multiunit_population_firing_rate
 from src.parameters import (ANIMALS, EDGE_ORDER, EDGE_SPACING,
                             SAMPLING_FREQUENCY)
 from track_linearization import get_linearized_position, make_track_graph
+from loren_frank_data_processing.tetrodes import (
+    get_tetrode_info_path,
+    loadmat,
+    convert_tetrode_epoch_to_dataframe,
+)
 
 logger = getLogger(__name__)
 
@@ -125,3 +128,41 @@ def get_interpolated_position_info(
     position_info = pd.concat((position_info, linear_position_df), axis=1)
 
     return position_info
+
+def make_tetrode_dataframe(epoch_key, animals):
+    animal, day, epoch = epoch_key
+    file_name = get_tetrode_info_path(animals[animal])
+    tet_info = loadmat(file_name, squeeze_me=True)["tetinfo"]
+    return convert_tetrode_epoch_to_dataframe(tet_info, epoch_key)
+
+
+def load_data(epoch_key):
+    logger.info('Loading position information and linearizing...')
+    position_info = (get_interpolated_position_info(epoch_key, ANIMALS)
+                     .dropna(subset=["linear_position"]))
+    track_graph = get_track_graph()
+    
+    logger.info('Loading multiunits...')
+    tetrode_info = make_tetrode_dataframe(epoch_key, ANIMALS)
+    is_brain_areas = tetrode_info.area.str.upper().isin(["CA1"])
+    tetrode_keys = tetrode_info.loc[is_brain_areas].index
+
+    def _time_function(*args, **kwargs):
+        return position_info.index
+
+    multiunits = get_all_multiunit_indicators(tetrode_keys, ANIMALS, _time_function)
+    
+    multiunit_spikes = (np.any(~np.isnan(multiunits.values), axis=1)
+                        ).astype(np.float)
+    multiunit_firing_rate = pd.DataFrame(
+        get_multiunit_population_firing_rate(
+            multiunit_spikes, SAMPLING_FREQUENCY), index=position_info.index,
+        columns=['firing_rate'])
+    
+    return {
+        'position_info': position_info,
+        'tetrode_info': tetrode_info,
+        'multiunits': multiunits,
+        'multiunit_firing_rate': multiunit_firing_rate,
+        'track_graph': track_graph,
+    }
