@@ -3,8 +3,7 @@ from logging import getLogger
 
 import numpy as np
 import pandas as pd
-from loren_frank_data_processing import (get_all_multiunit_indicators,
-                                         make_tetrode_dataframe)
+from loren_frank_data_processing import get_all_multiunit_indicators
 from loren_frank_data_processing.core import get_data_structure
 from loren_frank_data_processing.tetrodes import (
     convert_tetrode_epoch_to_dataframe, get_tetrode_info_path, loadmat)
@@ -95,7 +94,8 @@ def _get_pos_dataframe(epoch_key, animals):
             position_data[:, 5:9], columns=FIELD_NAMES[5:9], index=time
         ).rename(columns=NEW_NAMES)
     else:
-        return pd.DataFrame(position_data[:, 1:5], columns=FIELD_NAMES[1:5], index=time)
+        return pd.DataFrame(position_data[:, 1:5], columns=FIELD_NAMES[1:5],
+                            index=time)
 
 
 def get_interpolated_position_info(
