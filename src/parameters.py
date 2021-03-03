@@ -14,7 +14,7 @@ FIGURE_DIR = join(ROOT_DIR, 'figures')
 
 ANIMALS = {
     'david905': Animal(directory='/stelmo/mcoulter/david905/filterframework',
-                     short_name='david905'),
+                       short_name='david905'),
 }
 
 EDGE_ORDER = np.asarray(
