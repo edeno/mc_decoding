@@ -3,11 +3,15 @@
 from setuptools import find_packages, setup
 
 INSTALL_REQUIRES = ['numpy', 'numba', 'scipy', 'scikit-learn', 'matplotlib',
-                    'xarray', 'pandas', 'dask', 'tqdm', 'statsmodels', 'patsy']
+                    'xarray', 'pandas', 'seaborn',
+                    'loren_frank_data_processing',
+                    'ripple_detection',
+                    'replay_trajectory_classification',
+                    'trajectory_analysis_tools']
 TESTS_REQUIRE = ['pytest >= 2.7.1']
 
 setup(
-    name='analysis_template',
+    name='mc_decoding',
     version='0.1.0.dev0',
     license='MIT',
     description=(''),
