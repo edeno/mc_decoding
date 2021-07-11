@@ -3,10 +3,8 @@ from logging import getLogger
 
 import numpy as np
 import pandas as pd
-from loren_frank_data_processing import get_all_multiunit_indicators
+from loren_frank_data_processing import get_all_multiunit_indicators, make_tetrode_dataframe
 from loren_frank_data_processing.core import get_data_structure
-from loren_frank_data_processing.tetrodes import (
-    convert_tetrode_epoch_to_dataframe, get_tetrode_info_path, loadmat)
 from ripple_detection import get_multiunit_population_firing_rate
 from src.parameters import (ANIMALS, EDGE_ORDER, EDGE_SPACING,
                             SAMPLING_FREQUENCY)
@@ -127,13 +125,6 @@ def get_interpolated_position_info(
     return position_info
 
 
-def make_tetrode_dataframe(epoch_key, animals):
-    animal, day, epoch = epoch_key
-    file_name = get_tetrode_info_path(animals[animal])
-    tet_info = loadmat(file_name, squeeze_me=True)["tetinfo"]
-    return convert_tetrode_epoch_to_dataframe(tet_info, epoch_key)
-
-
 def load_data(epoch_key):
     logger.info('Loading position information and linearizing...')
     position_info = (get_interpolated_position_info(epoch_key, ANIMALS)
@@ -141,8 +132,8 @@ def load_data(epoch_key):
     track_graph = get_track_graph()
 
     logger.info('Loading multiunits...')
-    tetrode_info = make_tetrode_dataframe(epoch_key, ANIMALS)
-    is_brain_areas = tetrode_info.area.str.upper().isin(["CA1"])
+    tetrode_info = make_tetrode_dataframe(ANIMALS, epoch_key=epoch_key)
+    is_brain_areas = tetrode_info.area.str.upper().isin(["CA1", "DCA1", "ICA1"])
     tetrode_keys = tetrode_info.loc[is_brain_areas].index
 
     def _time_function(*args, **kwargs):
